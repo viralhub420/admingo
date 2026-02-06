@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import userRoutes from "./routes/user.js";
-import adsRoutes from "./routes/ads.js";
-import withdrawRoutes from "./routes/withdraw.js";
+import userRoutes from './user.js'
+import adsRoutes from './ads.js'
+import withdrawRoutes from './withdraw.js'
 
 dotenv.config();
 const app = express();
