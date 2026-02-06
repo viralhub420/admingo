@@ -1,33 +1,34 @@
 import express from "express";
-import { db } from "../firebase.js";
+import { db } from "./firebase.js"; // <-- ঠিক path
 
 const router = express.Router();
-const COOLDOWN = 60 * 1000; // 60 seconds cooldown
+
+const REWARD_POINTS = 10;
+const COOLDOWN = 60; // seconds
 
 router.post("/watch", async (req, res) => {
   const { telegramId } = req.body;
+
   const ref = db.collection("users").doc(String(telegramId));
   const doc = await ref.get();
 
   if (!doc.exists) {
-    return res.json({ error: "User not registered" });
+    return res.json({ success: false, error: "User not found" });
   }
 
-  const user = doc.data();
+  const userData = doc.data();
+  const now = Math.floor(Date.now() / 1000);
 
-  if (Date.now() - user.lastAdTime < COOLDOWN) {
-    const remaining = Math.ceil((COOLDOWN - (Date.now() - user.lastAdTime)) / 1000);
-    return res.json({ error: `⏳ Cooldown active, wait ${remaining} sec` });
+  if (now - userData.lastAdTime < COOLDOWN) {
+    return res.json({ success: false, error: `Please wait ${COOLDOWN} seconds between ads.` });
   }
 
-  // Add reward
-  const reward = 10; // points
   await ref.update({
-    balance: user.balance + reward,
-    lastAdTime: Date.now()
+    balance: userData.balance + REWARD_POINTS,
+    lastAdTime: now
   });
 
-  res.json({ success: true, reward });
+  res.json({ success: true, reward: REWARD_POINTS });
 });
 
 export default router;
