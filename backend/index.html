@@ -12,35 +12,36 @@
   <h2>Loading...</h2>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
+  const tg = window.Telegram.WebApp;
+  tg.ready();
 
-    const user = tg.initDataUnsafe?.user;
+  const user = tg.initDataUnsafe?.user;
 
-    if (user) {
+  if (user) {
+    document.body.innerHTML = `
+      <h2>Welcome ${user.first_name}</h2>
+      <p><b>ID:</b> ${user.id}</p>
+      <p><b>Username:</b> ${user.username || "N/A"}</p>
+    `;
 
-      // 🔴 এই অংশটা নতুন (backend এ পাঠাচ্ছে)
-      fetch("/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          telegramId: user.id,
-          username: user.username || ""
-        })
-      });
+    // 🔥 BACKEND এ USER পাঠানো
+    fetch("https://https://admingo.onrender.com/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        telegramId: user.id,
+        username: user.username || ""
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Register:", data))
+    .catch(err => console.error(err));
 
-      // UI দেখানো
-      document.body.innerHTML = `
-        <h2>Welcome ${user.first_name}</h2>
-        <p><b>ID:</b> ${user.id}</p>
-        <p><b>Username:</b> ${user.username || "N/A"}</p>
-      `;
-
-    } else {
-      document.body.innerHTML = "User data not found. Open from Telegram.";
-    }
+  } else {
+    document.body.innerHTML = "User data not found. Open from Telegram.";
+  }
   </script>
 </body>
 </html>
