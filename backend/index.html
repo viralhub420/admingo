@@ -8,32 +8,57 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
+      background: #f2f2f8;
+      margin: 0;
+      padding: 20px;
       text-align: center;
-      margin: 20px;
-      background: #f9f9f9;
     }
-    h2 { margin-bottom: 10px; }
-    #balance { font-size: 20px; margin: 15px 0; color: #333; }
-    .btn {
-      display: inline-block;
-      margin: 10px;
-      padding: 15px 25px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 10px;
-      border: none;
-      color: #fff;
+    h2 { color: #333; }
+    .balance-card {
       background: #4CAF50;
-      transition: 0.2s;
-      min-width: 140px;
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin: 15px auto;
+      width: 220px;
+      font-size: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-    .btn:hover { background: #45a049; transform: scale(1.05); }
-    #buttons { display: flex; flex-wrap: wrap; justify-content: center; }
+    #buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 15px;
+    }
+    .btn {
+      background: white;
+      color: #333;
+      border: 2px solid #4CAF50;
+      padding: 15px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 140px;
+      font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+    .btn:hover {
+      background: #4CAF50;
+      color: white;
+      transform: scale(1.05);
+    }
+    .btn .points {
+      display: block;
+      font-size: 14px;
+      margin-top: 5px;
+      color: #777;
+    }
   </style>
 </head>
 <body>
   <h2>Loading...</h2>
-  <div id="balance"></div>
+  <div id="balance" class="balance-card"></div>
   <div id="buttons"></div>
 
   <script>
@@ -55,19 +80,19 @@
         <h2>Welcome ${user.first_name}</h2>
         <p><b>ID:</b> ${user.id}</p>
         <p><b>Username:</b> ${user.username || "N/A"}</p>
-        <div id="balance">Balance: ${balance} coins</div>
+        <div id="balance" class="balance-card">Balance: ${balance} coins</div>
         <div id="buttons"></div>
       `;
 
       const buttonsData = [
-        { emoji: "💰", name: "Watch Ad" },
-        { emoji: "🎯", name: "Spin & Earn" },
-        { emoji: "📦", name: "Daily Bonus" },
-        { emoji: "🎁", name: "Lucky Box" },
-        { emoji: "👥", name: "Invite Friend" },
-        { emoji: "🎬", name: "Video Quest" },
-        { emoji: "🏆", name: "Challenge Reward" },
-        { emoji: "🕹️", name: "Mini Game Bonus" }
+        { emoji: "💰", name: "Watch Ad", points: 10 },
+        { emoji: "🎯", name: "Spin & Earn", points: 15 },
+        { emoji: "📦", name: "Daily Bonus", points: 20 },
+        { emoji: "🎁", name: "Lucky Box", points: 25 },
+        { emoji: "👥", name: "Invite Friend", points: 30 },
+        { emoji: "🎬", name: "Video Quest", points: 12 },
+        { emoji: "🏆", name: "Challenge Reward", points: 18 },
+        { emoji: "🕹️", name: "Mini Game Bonus", points: 22 }
       ];
 
       const buttonsDiv = document.getElementById("buttons");
@@ -75,27 +100,27 @@
       buttonsData.forEach(btn => {
         const button = document.createElement("button");
         button.className = "btn";
-        button.innerHTML = `${btn.emoji} ${btn.name}`;
+        button.innerHTML = `${btn.emoji} ${btn.name}<span class="points">+${btn.points} coins</span>`;
         button.onclick = () => {
           showMonetagAd(btn.name);
 
+          // Add coins locally
+          balance += btn.points;
+          document.getElementById("balance").innerText = `Balance: ${balance} coins`;
+
+          // Backend earn API call
           fetch('https://admingo.onrender.com/earn', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               telegramId: user.id,
               buttonName: btn.name,
-              coins: 10
+              coins: btn.points
             })
           })
           .then(res => res.json())
           .then(data => {
-            if(data.success){
-              balance += 10;
-              document.getElementById("balance").innerText = `Balance: ${balance} coins`;
-            } else {
-              console.error("Failed to add coins:", data);
-            }
+            if(!data.success) console.error("Failed to add coins:", data);
           })
           .catch(err => console.error("Error earning coins:", err));
         };
