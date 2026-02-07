@@ -1,182 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AdminGo Mini App</title>
 
 <!-- Telegram Mini App SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Monetag Rewarded Ads SDK -->
+<!-- Monetag SDK -->
 <script src="https://libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
 
 <style>
-  body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-    color: #333;
-    text-align: center;
-  }
-  h2 { margin-bottom: 5px; font-weight: bold; }
+body {
+  background:#0f0f0f;
+  color:#fff;
+  font-family: 'Segoe UI', sans-serif;
+  text-align:center;
+  margin:0; padding:15px;
+}
+h3 { margin:10px 0; }
 
-  /* Balance Card */
-  .balance-card {
-    background: linear-gradient(45deg, #FFD700, #FF8C00);
-    color: white;
-    padding: 25px;
-    border-radius: 20px;
-    margin: 15px auto 25px auto;
-    width: 250px;
-    font-size: 22px;
-    font-weight: bold;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-  }
+/* Balance card */
+.balance-card {
+  background: linear-gradient(135deg,#0088cc,#005f91);
+  padding:25px;
+  border-radius:20px;
+  margin-bottom:20px;
+  box-shadow:0 10px 20px rgba(0,0,0,0.3);
+}
+.balance-card h1 { font-size:42px; margin:10px 0; }
 
-  /* Buttons Grid */
-  #buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    background: rgba(255,255,255,0.2);
-    padding: 20px;
-    border-radius: 20px;
-  }
+/* Referral */
+.refer-section {
+  background:#1e1e1e;
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:20px;
+  border:1px dashed #0088cc;
+}
 
-  /* Earning Buttons */
-  .btn {
-    border: none;
-    color: white;
-    padding: 18px 20px;
-    border-radius: 15px;
-    cursor: pointer;
-    width: 160px;
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-  }
+/* Buttons Grid */
+.btn-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:20px;
+}
+button {
+  padding:16px;
+  border:none;
+  border-radius:15px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:14px;
+  color:white;
+  transition:0.2s;
+}
+button:active { transform:scale(0.95); }
 
-  /* Single Buttons Container */
-  #singleButtons {
-    margin-top: 25px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-  }
+.btn-earning { font-size:16px; }
+.btn-main { background:#27ae60; }
+.btn-game { background:#2980b9; }
+.btn-offer { background:#8e44ad; }
+.btn-ad { background:#f1c40f; color:#000; }
 
-  .single-btn {
-    padding: 18px;
-    border-radius: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .single-btn:hover { transform: scale(1.05); }
-
-  /* Colors */
-  .watch-ad { background: #FF6B6B; }
-  .spin-earn { background: #6BCB77; }
-  .daily-bonus { background: #4D96FF; }
-  .lucky-box { background: #FFD93D; color:#333; }
-  .video-quest { background: #FF6EC7; }
-  .challenge-reward { background: #FF9F1C; }
-  .mini-game { background: #845EC2; }
-
-  .invite { background: #00C9A7; color:white; width:200px; }
-  .withdraw { background: #FF595E; color:white; width:220px; font-size:20px; }
-  .contact { background: #FFB547; color: #333; width:200px; }
-  .admin { background: #333; color:white; width:200px; }
-
-  .points { display: block; font-size: 14px; margin-top: 5px; opacity: 0.8; }
+.btn-ref { background:#f39c12; grid-column: span 2; }
+.btn-withdraw { background:#e67e22; grid-column: span 2; }
+.btn-contact { background:#16a085; grid-column: span 2; }
+.btn-admin { background:#d35400; grid-column: span 2; display:none; }
+.btn-rules { background:#e74c3c; grid-column: span 2; margin-top:10px; }
 </style>
 </head>
 <body>
-<h2>Loading...</h2>
-<div id="balance" class="balance-card"></div>
-<div id="buttons"></div>
-<div id="singleButtons"></div>
+
+<h3>Welcome, <span id="userName">User</span>!</h3>
+
+<div class="balance-card">
+  <p>Current Balance</p>
+  <h1 id="userBalance">0</h1>
+</div>
+
+<div class="refer-section">
+  <p style="margin:0 0 10px 0; font-size:14px; color:#f1c40f;">🎁 প্রতি রেফারে পান ১০০ পয়েন্ট!</p>
+  <button class="btn-ref" onclick="shareReferral()">🔗 Invite Friends & Earn</button>
+</div>
+
+<!-- Earning buttons -->
+<div class="btn-grid" id="earningButtons"></div>
+
+<!-- Single buttons -->
+<div class="btn-grid" id="singleButtons">
+  <button class="btn-withdraw" onclick="withdrawCoins()">💰 Withdraw</button>
+  <button class="btn-contact" onclick="contactUs()">📩 Contact / Complaint</button>
+  <button id="adminBtn" class="btn-admin" onclick="toggleAdmin()">🛠 Admin Panel</button>
+  <button class="btn-rules" onclick="showRules()">📜 Rules & Info</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.ready();
+// Firebase init
+firebase.initializeApp({ 
+  apiKey: "AIzaSyD8ZSiPZ9HDJV1qGznPOBAu2qYN9lmSqWU", 
+  authDomain: "skbd355-reward-app.firebaseapp.com", 
+  projectId: "skbd355-reward-app" 
+});
+const db = firebase.firestore();
 
-  let balance = 0;
-  const user = tg.initDataUnsafe?.user;
+// Telegram Mini App
+const tg = window.Telegram.WebApp;
+tg.ready();
+const user = tg.initDataUnsafe?.user;
+let userRef;
+let balance = 0;
 
-  function showMonetagAd(buttonName, points) {
-    if (typeof show_10580727 === "function") {
-      show_10580727(); // Monetag rewarded ad call
-    } else {
-      console.log("Monetag ad not ready yet");
+if(user){
+  document.getElementById("userName").innerText = user.first_name;
+  userRef = db.collection("users").doc(String(user.id));
+  if(user.id === 6311806060) document.getElementById("adminBtn").style.display="block";
+
+  // Listen for balance updates
+  userRef.onSnapshot(doc => {
+      if(doc.exists) document.getElementById("userBalance").innerText = doc.data().balance;
+  });
+}
+
+// Earning buttons data
+const earningButtonsData = [
+  {name:"💰 Watch Ad", points:15, link:"https://otieu.com/4/10540712", cls:"btn-ad"},
+  {name:"🎯 Spin & Earn", points:20, link:"https://otieu.com/4/10235751", cls:"btn-game"},
+  {name:"📦 Daily Bonus", points:20, link:"https://otieu.com/4/10540712", cls:"btn-main"},
+  {name:"🎁 Lucky Box", points:25, link:"https://otieu.com/4/10453524", cls:"btn-offer"},
+  {name:"🎬 Video Quest", points:12, link:"https://otieu.com/4/10540712", cls:"btn-main"},
+  {name:"🏆 Challenge Reward", points:18, link:"https://otieu.com/4/10540712", cls:"btn-game"},
+  {name:"🕹️ Mini Game Bonus", points:22, link:"https://otieu.com/4/10540712", cls:"btn-offer"}
+];
+
+function awardCoins(points, link, taskName){
+  // Monetag ad
+  if(typeof show_10580727==="function") show_10580727();
+  tg.openLink(link);
+
+  setTimeout(()=>{
+    if(confirm(`🎉 ${taskName}: +${points} coins! Accept?`)){
+      userRef.update({balance: firebase.firestore.FieldValue.increment(points)});
     }
-    // Coin add logic
-    balance += points;
-    document.getElementById("balance").innerText = `Balance: ${balance} coins`;
-  }
+  },2000);
+}
 
-  if (!user) {
-    document.body.innerHTML = "<h2>User data not found. Open from Telegram.</h2>";
-  } else {
-    document.body.innerHTML = `
-      <h2>Welcome ${user.first_name}</h2>
-      <p><b>ID:</b> ${user.id}</p>
-      <p><b>Username:</b> ${user.username || "N/A"}</p>
-      <div id="balance" class="balance-card">Balance: ${balance} coins</div>
-      <div id="buttons"></div>
-      <div id="singleButtons"></div>
-    `;
+// Render earning buttons
+const earningDiv = document.getElementById("earningButtons");
+earningButtonsData.forEach(b=>{
+  const btn = document.createElement("button");
+  btn.className = "btn-earning "+b.cls;
+  btn.innerText = `${b.name} (+${b.points})`;
+  btn.onclick = ()=>awardCoins(b.points, b.link, b.name);
+  earningDiv.appendChild(btn);
+});
 
-    // Earning Buttons
-    const buttonsData = [
-      { emoji: "💰", name: "Watch Ad", points: 10, cls:"watch-ad" },
-      { emoji: "🎯", name: "Spin & Earn", points: 15, cls:"spin-earn" },
-      { emoji: "📦", name: "Daily Bonus", points: 20, cls:"daily-bonus" },
-      { emoji: "🎁", name: "Lucky Box", points: 25, cls:"lucky-box" },
-      { emoji: "🎬", name: "Video Quest", points: 12, cls:"video-quest" },
-      { emoji: "🏆", name: "Challenge Reward", points: 18, cls:"challenge-reward" },
-      { emoji: "🕹️", name: "Mini Game Bonus", points: 22, cls:"mini-game" }
-    ];
+// Referral
+function shareReferral(){
+  const inviteLink = `https://t.me/skbd355_bot?start=${user.id}`;
+  tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=Join and Earn!`);
+}
 
-    const buttonsDiv = document.getElementById("buttons");
-    buttonsData.forEach(btn => {
-      const button = document.createElement("button");
-      button.className = `btn ${btn.cls}`;
-      button.innerHTML = `${btn.emoji} ${btn.name}<span class="points">+${btn.points} coins</span>`;
-      button.onclick = () => showMonetagAd(btn.name, btn.points);
-      buttonsDiv.appendChild(button);
-    });
+// Withdraw
+function withdrawCoins(){
+  userRef.get().then(doc=>{
+      if(doc.data().balance<5000) return alert("⚠️ অন্তত ৫০০০ পয়েন্ট প্রয়োজন!");
+      let method = prompt("পেমেন্ট মাধ্যম (bkash/nagad/rocket):");
+      if(method){
+          let num = prompt(method.toUpperCase()+" নাম্বার দিন:");
+          if(num && num.length>=11){
+              db.collection("withdraws").add({
+                  user_id:user.id, number:num, amount:5000, method:method.toLowerCase(), status:"pending", timestamp:new Date()
+              }).then(()=> userRef.update({balance: firebase.firestore.FieldValue.increment(-5000)}));
+              alert("✅ Withdraw request successful!");
+          }
+      }
+  });
+}
 
-    // Single Buttons
-    const singleButtonsDiv = document.getElementById("singleButtons");
+// Contact
+function contactUs(){ alert("📩 Send your complaint or feedback here!"); }
 
-    const singleBtns = [
-      { name: "Invite Friend (+50 coins)", cls: "invite", action: ()=>alert("Invite friend flow: +50 coins per referral") },
-      { name: "Withdraw", cls: "withdraw", action: ()=>alert("Withdraw flow") },
-      { name: "Contact Us", cls: "contact", action: ()=>alert("Contact / Complaint") }
-    ];
+// Admin panel
+function toggleAdmin(){
+  db.collection("withdraws").where("status","==","pending").get().then(snap=>{
+      let list="📢 Pending Withdraws:\n\n";
+      snap.forEach(doc=>{
+          let d=doc.data();
+          list+=`📱 ${d.method.toUpperCase()}: ${d.number}\n💰 Amt: ${d.amount}\n\n`;
+      });
+      alert(list||"No pending withdraw requests.");
+  });
+}
 
-    const isAdmin = user.id === 123456789; // <-- replace with your Telegram ID
-    if(isAdmin){
-      singleBtns.push({ name: "Admin Panel", cls: "admin", action: ()=>alert("Admin Panel") });
-    }
+// Rules
+function showRules(){
+  alert("📜 Rules:\n1. Watch ad fully.\n2. Wait at least required seconds.\n3. Use proper steps to earn coins.");
+}
 
-    singleBtns.forEach(btn=>{
-      const b = document.createElement("button");
-      b.className = `single-btn ${btn.cls}`;
-      b.innerText = btn.name;
-      b.onclick = btn.action;
-      singleButtonsDiv.appendChild(b);
-    });
-  }
+// Telegram MainButton
+tg.MainButton.setText("💰 WITHDRAW MONEY").show().onClick(()=>withdrawCoins());
+tg.expand();
 </script>
+
 </body>
-</html>
+  </html>
