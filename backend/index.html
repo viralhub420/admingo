@@ -2,42 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdminGo Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    h2 { margin-bottom: 10px; }
+    #balance { font-size: 20px; margin: 15px 0; color: #333; }
+    .btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 15px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+      color: #fff;
+      background: #4CAF50;
+      transition: 0.2s;
+      min-width: 140px;
+    }
+    .btn:hover { background: #45a049; transform: scale(1.05); }
+    #buttons { display: flex; flex-wrap: wrap; justify-content: center; }
   </style>
 </head>
 <body>
   <h2>Loading...</h2>
+  <div id="balance"></div>
+  <div id="buttons"></div>
+
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
 
+    let balance = 0;
     const user = tg.initDataUnsafe?.user;
 
-    if (user) {
+    function showMonetagAd(buttonName) {
+      // Monetag ad placeholder
+      alert(`Monetag ad for "${buttonName}" would show here!`);
+    }
+
+    if (!user) {
+      document.body.innerHTML = "<h2>User data not found. Open from Telegram.</h2>";
+    } else {
       document.body.innerHTML = `
         <h2>Welcome ${user.first_name}</h2>
         <p><b>ID:</b> ${user.id}</p>
         <p><b>Username:</b> ${user.username || "N/A"}</p>
+        <div id="balance">Balance: ${balance} coins</div>
+        <div id="buttons"></div>
       `;
 
-      // Firestore auto save (only new)
-      fetch('/register', {   // relative path now
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId: user.id,             // backend expect
-          username: user.username || user.first_name
-        })
-      })
-      .then(res => res.json())
-      .then(data => console.log("Firestore response:", data))
-      .catch(err => console.error("Error saving user:", err));
+      const buttonsData = [
+        { emoji: "💰", name: "Watch Ad" },
+        { emoji: "🎯", name: "Spin & Earn" },
+        { emoji: "📦", name: "Daily Bonus" },
+        { emoji: "🎁", name: "Lucky Box" },
+        { emoji: "👥", name: "Invite Friend" },
+        { emoji: "🎬", name: "Video Quest" },
+        { emoji: "🏆", name: "Challenge Reward" },
+        { emoji: "🕹️", name: "Mini Game Bonus" }
+      ];
 
-    } else {
-      document.body.innerHTML = "User data not found. Open from Telegram.";
+      const buttonsDiv = document.getElementById("buttons");
+
+      buttonsData.forEach(btn => {
+        const button = document.createElement("button");
+        button.className = "btn";
+        button.innerHTML = `${btn.emoji} ${btn.name}`;
+        button.onclick = () => {
+          showMonetagAd(btn.name);
+
+          fetch('https://admingo.onrender.com/earn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              telegramId: user.id,
+              buttonName: btn.name,
+              coins: 10
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if(data.success){
+              balance += 10;
+              document.getElementById("balance").innerText = `Balance: ${balance} coins`;
+            } else {
+              console.error("Failed to add coins:", data);
+            }
+          })
+          .catch(err => console.error("Error earning coins:", err));
+        };
+        buttonsDiv.appendChild(button);
+      });
     }
   </script>
 </body>
