@@ -15,14 +15,14 @@
     display: flex; flex-direction: column; align-items: center;
   }
 
-  /* Blue Balance Card */
+  /* Blue Balance Card (Like Image) */
   .balance-container {
     background: #0077B6; width: 100%; border-radius: 20px;
     padding: 30px 0; text-align: center; margin-bottom: 20px;
   }
   .balance-amount { font-size: 55px; font-weight: bold; }
 
-  /* Referral Section */
+  /* Referral Card */
   .referral-card {
     background: #121212; border: 1px dashed #444;
     border-radius: 15px; width: 100%; padding: 15px;
@@ -30,10 +30,17 @@
   }
   .invite-btn {
     background: #F39C12; border: none; padding: 12px;
-    border-radius: 30px; color: white; font-weight: bold; width: 85%;
+    border-radius: 30px; color: white; font-weight: bold; width: 85%; cursor: pointer;
   }
 
-  /* Task Grid */
+  /* Daily Bonus (Full Width) */
+  .daily-btn {
+    width: 100%; padding: 16px; border-radius: 15px; border: none;
+    color: white; font-weight: bold; margin-bottom: 12px; cursor: pointer;
+    background-color: #2ECC71;
+  }
+
+  /* Task Grid (Side by Side like Image) */
   .grid-container {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 12px; width: 100%; margin-bottom: 12px;
@@ -42,27 +49,29 @@
     padding: 15px; border-radius: 12px; border: none;
     color: white; font-weight: bold; cursor: pointer;
     display: flex; flex-direction: column; align-items: center; font-size: 14px;
+    gap: 5px;
   }
 
-  /* Full Width Buttons */
-  .full-btn {
-    width: 100%; padding: 16px; border-radius: 15px; border: none;
-    color: white; font-weight: bold; margin-bottom: 12px; cursor: pointer;
+  /* Bottom Options */
+  .action-btn {
+    width: 100%; padding: 15px; border-radius: 12px; border: none;
+    color: white; font-weight: bold; margin-bottom: 10px; cursor: pointer;
   }
 
-  /* Withdraw Button - Exact Style */
+  /* Withdraw Button (Exact Style from Image) */
   .withdraw-btn {
     background-color: #5DADE2; width: 100%; padding: 18px;
     border-radius: 15px; border: none; color: white;
     font-weight: bold; font-size: 18px; margin-top: 10px;
     text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(93, 173, 226, 0.3);
   }
 
-  /* Colors */
-  .bg-green { background-color: #2ECC71; }
+  /* Specific Colors */
   .bg-blue { background-color: #3498DB; }
   .bg-purple { background-color: #9B59B6; }
   .bg-yellow { background-color: #F1C40F; color: black; }
+  .bg-orange { background-color: #E67E22; }
   .bg-red { background-color: #E74C3C; }
   .bg-teal { background-color: #16A085; }
 </style>
@@ -79,17 +88,23 @@
     <button class="invite-btn" onclick="inviteFriend()">🔗 Invite Friends & Earn</button>
   </div>
 
-  <button class="full-btn bg-green" onclick="handleAd('Daily', 20)">🎁 Daily Bonus (+20)</button>
+  <button class="daily-btn" onclick="handleAd('Daily', 20)">🎁 Daily Bonus (+20)</button>
 
   <div class="grid-container">
     <button class="grid-btn bg-blue" onclick="handleAd('Watch Ad', 10)">💰 Watch Ad <span>+10</span></button>
     <button class="grid-btn bg-purple" onclick="handleAd('Spin', 15)">🎯 Spin & Earn <span>+15</span></button>
+    
     <button class="grid-btn bg-yellow" onclick="handleAd('Lucky', 25)">🎁 Lucky Box <span>+25</span></button>
-    <button class="grid-btn bg-red" onclick="handleAd('Video', 12)">🎬 Video Quest <span>+12</span></button>
+    <button class="grid-btn bg-orange" onclick="handleAd('Video', 12)">🎬 Video Quest <span>+12</span></button>
+    
+    <button class="grid-btn bg-purple" onclick="handleAd('Challenge', 18)">🏆 Challenge <span>+18</span></button>
+    <button class="grid-btn bg-blue" onclick="handleAd('Game', 22)">🕹️ Mini Game <span>+22</span></button>
   </div>
 
-  <button class="full-btn bg-teal" onclick="showRules()">📜 Rules & Regulations</button>
-  <button class="full-btn bg-purple" onclick="tg.openLink('https://t.me/yourchannel')">📢 Official Channel</button>
+  <button class="action-btn bg-red" onclick="showRules()">📜 Rules & Regulations</button>
+  <button class="action-btn bg-teal" onclick="tg.openLink('https://t.me/yourchannel')">📢 Official Channel</button>
+  
+  <div id="adminArea" style="width: 100%;"></div>
 
   <button class="withdraw-btn" onclick="requestWithdraw()">💰 WITHDRAW MONEY</button>
 
@@ -101,31 +116,25 @@ tg.expand();
 const user = tg.initDataUnsafe?.user || { id: 0 };
 let balance = 0;
 
-// আপনার অরিজিনাল রুলসগুলো এখানে ফিরিয়ে আনা হয়েছে
-const rulesHTML = `
-  <div style="text-align: left; color: #333; font-size: 14px;">
-    <h3 style="text-align: center;">Rules & Regulations</h3>
-    <ol>
-      <li><b>Withdraw নিয়ম:</b> ৫০০০ coins করে। নগদ, বিকাশ বা রকেট ব্যবহার।</li>
-      <li><b>Ad/Reward Usage:</b> Watch Ad, Spin, Lucky Box থেকে পয়েন্ট।</li>
-      <li><b>Invite Friend:</b> শুধুমাত্র নতুন বন্ধু রেফার করলে +50 Coins।</li>
-      <li><b>Mini Games:</b> Cheats বা অন্যের অ্যাকাউন্ট ব্যবহার নিষিদ্ধ।</li>
-      <li><b>Coins ব্যালেন্স:</b> অ্যাপের মধ্যে ব্যবহার বা Withdraw।</li>
-      <li><b>Behavior:</b> Spam করলে অ্যাকাউন্ট block হতে পারে।</li>
-      <li><b>Contact:</b> কোনো সমস্যায় Admin-এর সাথে কথা বলুন।</li>
-    </ol>
-  </div>
+// All 7 Original Rules
+const originalRules = `
+1. Withdraw নিয়ম: ৫০০০ coins করে।
+2. Ad/Reward: Watch Ad, Spin, Box থেকে পয়েন্ট।
+3. Invite: নতুন বন্ধু রেফার করলে +50 Coins।
+4. Mini Games: কোনো হ্যাকিং বা চিট নিষিদ্ধ।
+5. ব্যালেন্স: অ্যাপের ভেতর ব্যবহার বা উইথড্র করা যাবে।
+6. Behavior: স্প্যাম করলে অ্যাকাউন্ট ব্লক হবে।
+7. Contact: প্রয়োজনে অ্যাডমিনের সাথে কথা বলুন।
 `;
 
 function showRules() {
   tg.showPopup({
     title: 'নিয়মাবলী',
-    message: '১. ৫০০০ কয়েন হলে উইথড্র।\n২. ভিপিএন নিষিদ্ধ।\n৩. রেফার বোনাস ১০০ কয়েন।\n৪. স্প্যাম করলে আইডি ব্লক হবে।',
+    message: originalRules,
     buttons: [{type: 'ok', text: 'বুঝেছি'}]
   });
 }
 
-// Balance and Coins Logic
 async function loadBalance() {
   try {
     const res = await fetch(`https://admingo.onrender.com/getBalance?telegramId=${user.id}`);
@@ -145,7 +154,7 @@ async function addCoins(points) {
     balance += points;
     document.getElementById("balance").innerText = balance;
     tg.HapticFeedback.notificationOccurred('success');
-  } catch (e) { console.log("Error"); }
+  } catch (e) { console.log("Update error"); }
 }
 
 function handleAd(name, points) {
@@ -161,8 +170,13 @@ function inviteFriend() {
 }
 
 function requestWithdraw() {
-  if(balance < 5000) tg.showAlert("৫০০০ কয়েন পূর্ণ করুন!");
-  else tg.showAlert("উইথড্র রিকোয়েস্ট পাঠানো হয়েছে।");
+  if(balance < 5000) tg.showAlert("উইথড্রর জন্য ৫০০০ পয়েন্ট প্রয়োজন!");
+  else tg.showAlert("উইথড্র রিকোয়েস্ট সফল হয়েছে।");
+}
+
+// Admin Check
+if(user.id === 6311806060) {
+  document.getElementById("adminArea").innerHTML = `<button class="action-btn bg-orange">🛠️ Admin Dashboard</button>`;
 }
 
 loadBalance();
