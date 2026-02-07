@@ -15,21 +15,38 @@
 body {
   font-family: 'Arial', sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 10px;
   background: linear-gradient(135deg, #74ebd5, #ACB6E5);
   color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   text-align: center;
 }
 
-h2 { margin-bottom: 10px; font-weight: bold; }
+/* Header */
+h2 { margin-bottom: 5px; font-weight: bold; }
 
+/* Balance Card */
 .balance-card {
   background: linear-gradient(45deg, #FFD700, #FF8C00);
   color: white;
   padding: 25px;
   border-radius: 20px;
-  margin: 15px auto 25px auto;
-  width: 250px;
   font-size: 22px;
   font-weight: bold;
   box-shadow: 0 6px 15px rgba(0,0,0,0.25);
@@ -38,9 +55,8 @@ h2 { margin-bottom: 10px; font-weight: bold; }
 /* Buttons Grid */
 #buttons {
   display: grid;
-  grid-template-columns: repeat(2, 160px);
+  grid-template-columns: 1fr 1fr;
   gap: 15px;
-  justify-content: center;
 }
 
 /* Earning Buttons */
@@ -61,7 +77,6 @@ h2 { margin-bottom: 10px; font-weight: bold; }
 
 /* Single Buttons */
 #singleButtons {
-  margin-top: 25px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -73,7 +88,8 @@ h2 { margin-bottom: 10px; font-weight: bold; }
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  width: 200px;
+  width: 100%;
+  max-width: 220px;
   transition: transform 0.2s;
 }
 .single-btn:hover { transform: scale(1.05); }
@@ -97,10 +113,12 @@ h2 { margin-bottom: 10px; font-weight: bold; }
 </head>
 <body>
 
-<h2 id="welcomeMsg">Loading...</h2>
-<div id="balance" class="balance-card"></div>
-<div id="buttons"></div>
-<div id="singleButtons"></div>
+<div class="card">
+  <h2 id="welcomeMsg">Loading...</h2>
+  <div id="balance" class="balance-card"></div>
+  <div id="buttons"></div>
+  <div id="singleButtons"></div>
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
