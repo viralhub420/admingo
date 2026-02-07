@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src='//libtl.com/sdk.js' data-zone='10580727' data-sdk='show_10580727'></script>  
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AdminGo Mini App</title>
+
+<!-- Telegram Mini App SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- Monetag Rewarded Ads SDK -->
+<script src="https://libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
+
 <style>
   body {
     font-family: 'Arial', sans-serif;
@@ -16,7 +20,6 @@
     color: #333;
     text-align: center;
   }
-
   h2 { margin-bottom: 5px; font-weight: bold; }
 
   /* Balance Card */
@@ -109,8 +112,15 @@
   let balance = 0;
   const user = tg.initDataUnsafe?.user;
 
-  function showMonetagAd(buttonName) {
-    alert(`Monetag ad for "${buttonName}" would show here!`);
+  function showMonetagAd(buttonName, points) {
+    if (typeof show_10580727 === "function") {
+      show_10580727(); // Monetag rewarded ad call
+    } else {
+      console.log("Monetag ad not ready yet");
+    }
+    // Coin add logic
+    balance += points;
+    document.getElementById("balance").innerText = `Balance: ${balance} coins`;
   }
 
   if (!user) {
@@ -141,11 +151,7 @@
       const button = document.createElement("button");
       button.className = `btn ${btn.cls}`;
       button.innerHTML = `${btn.emoji} ${btn.name}<span class="points">+${btn.points} coins</span>`;
-      button.onclick = () => {
-        showMonetagAd(btn.name);
-        balance += btn.points;
-        document.getElementById("balance").innerText = `Balance: ${balance} coins`;
-      };
+      button.onclick = () => showMonetagAd(btn.name, btn.points);
       buttonsDiv.appendChild(button);
     });
 
