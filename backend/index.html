@@ -3,45 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AdminGo Mini App</title>
+<title>AdminGo Mini App HD</title>
 
-<!-- Telegram Web App SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Monetag SDK -->
-<script src='//libtl.com/sdk.js' data-zone='10580727' data-sdk='show_10580727'></script>
+<script src="//libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
 
 <style>
+/* ------------------- Animated Background ------------------- */
 body {
   font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 10px;
-  background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-  color: #333;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  box-sizing: border-box;
+  background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+  background-size: 400% 400%;
+  animation: gradientBG 20s ease infinite;
 }
 
+@keyframes gradientBG {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+/* ------------------- Main Card ------------------- */
 .card {
   background: #fff;
   border-radius: 20px;
   padding: 20px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   gap: 20px;
   text-align: center;
+  transform: translateY(0);
+  animation: floatCard 6s ease-in-out infinite;
 }
 
-/* Header */
+@keyframes floatCard {
+  0%,100%{ transform: translateY(0);}
+  50%{ transform: translateY(-6px);}
+}
+
 h2 { margin-bottom: 5px; font-weight: bold; }
 
-/* Balance Card */
+/* ------------------- Balance Card ------------------- */
 .balance-card {
   background: linear-gradient(45deg, #FFD700, #FF8C00);
   color: white;
@@ -49,66 +60,77 @@ h2 { margin-bottom: 5px; font-weight: bold; }
   border-radius: 20px;
   font-size: 22px;
   font-weight: bold;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  animation: pulse 2s infinite alternate, floatBalance 5s ease-in-out infinite;
 }
 
-/* Buttons Grid */
-#buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+@keyframes pulse {
+  0% { box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
+  50% { box-shadow: 0 10px 20px rgba(0,0,0,0.35); }
+  100% { box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
+}
+@keyframes floatBalance {
+  0%,100%{ transform: translateY(0);}
+  50%{ transform: translateY(-4px);}
 }
 
-/* Earning Buttons */
-.btn {
+/* ------------------- Buttons ------------------- */
+#buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.btn, .single-btn {
   border: none;
-  color: white;
-  padding: 18px 20px;
   border-radius: 15px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-}
-
-/* Single Buttons */
-#singleButtons {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  align-items: center;
-}
-.single-btn {
   padding: 18px;
-  border-radius: 20px;
-  font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  width: 100%;
-  max-width: 220px;
-  transition: transform 0.2s;
+  transition: all 0.2s ease;
 }
-.single-btn:hover { transform: scale(1.05); }
+.btn { font-size:16px; color:white; }
+.single-btn { font-size:18px; width:100%; max-width:220px; color:white; }
 
-/* Colors */
-.watch-ad { background: #FF6B6B; }
-.spin-earn { background: #6BCB77; }
-.daily-bonus { background: #4D96FF; }
-.lucky-box { background: #FFD93D; color:#333; }
-.video-quest { background: #FF6EC7; }
-.challenge-reward { background: #FF9F1C; }
-.mini-game { background: #845EC2; }
+.btn:hover, .single-btn:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.35); }
 
-.invite { background: #00C9A7; color:white; }
-.withdraw { background: #FF595E; color:white; font-size:18px; }
-.contact { background: #FFB547; color: #333; }
-.admin { background: #333; color:white; }
+/* Button Colors */
+.watch-ad{ background:#FF6B6B; } .spin-earn{ background:#6BCB77; } .daily-bonus{ background:#4D96FF; }
+.lucky-box{ background:#FFD93D; color:#333;} .video-quest{ background:#FF6EC7; } .challenge-reward{ background:#FF9F1C; }
+.mini-game{ background:#845EC2; } .invite{ background:#00C9A7; } .withdraw{ background:#FF595E; } 
+.contact{ background:#FFB547; color:#333; } .rules{ background:#333; } .admin{ background:#333; }
 
-.points { display: block; font-size: 14px; margin-top: 5px; opacity: 0.8; }
+/* ------------------- Points Label ------------------- */
+.points{ display:block; font-size:14px; margin-top:5px; opacity:0.8; }
+
+/* ------------------- Modal ------------------- */
+.modal {
+  display:none;
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter: blur(5px);
+  justify-content:center; align-items:center;
+  z-index:1000; opacity:0; transition: opacity 0.25s ease;
+}
+.modal.show{ opacity:1; }
+.modal-content {
+  background:#fff; padding:25px 20px; border-radius:20px;
+  max-width:400px; width:90%; max-height:80%; overflow-y:auto;
+  text-align:center; position:relative;
+  box-shadow:0 8px 25px rgba(0,0,0,0.3);
+  transform:scale(0.95);
+  transition: all 0.25s ease;
+}
+.modal.show .modal-content{ transform:scale(1);}
+.modal-close{
+  position:absolute; top:10px; right:15px; cursor:pointer; font-weight:bold; font-size:22px; color:#333;
+}
+.modal-close:hover{ color:#FF595E; }
+.modal-content h3{ margin-bottom:15px; }
+.modal-content p{ margin-bottom:15px; }
+.modal-content button{
+  width:auto; padding:12px 18px; margin:5px; border-radius:12px; font-weight:bold; cursor:pointer; transition:all 0.2s ease;
+}
+.modal-content button:hover{ transform: scale(1.08) translateY(-2px); }
+
+/* Floating Button Glow */
+.btn, .single-btn{ box-shadow:0 3px 10px rgba(255,255,255,0.1) inset; }
+
 </style>
 </head>
 <body>
@@ -120,87 +142,143 @@ h2 { margin-bottom: 5px; font-weight: bold; }
   <div id="singleButtons"></div>
 </div>
 
+<!-- Rules Modal -->
+<div id="rulesModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" id="closeRules">&times;</span>
+    <div id="rulesContent"></div>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div id="withdrawModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" id="closeWithdraw">&times;</span>
+    <h3>Withdraw 5000 Coins</h3>
+    <p>Choose Payment Method:</p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+      <button class="single-btn withdraw" id="payNogod">নগদ</button>
+      <button class="single-btn withdraw" id="payBikash">বিকাশ</button>
+      <button class="single-btn withdraw" id="payRocket">রকেট</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
 
-let balance = 0;
-const user = tg.initDataUnsafe?.user;
+let balance=0;
+const user=tg.initDataUnsafe?.user;
 
 // -------------------- Backend Balance --------------------
-async function loadBalance() {
-  try {
-    const res = await fetch(`https://admingo.onrender.com/getBalance?telegramId=${user.id}`);
-    const data = await res.json();
-    balance = data.balance || 0;
-    document.getElementById("balance").innerText = `Balance: ${balance} coins`;
-  } catch(e) { console.log("Error loading balance:", e); }
+async function loadBalance(){
+  try{
+    const res=await fetch(`https://admingo.onrender.com/getBalance?telegramId=${user.id}`);
+    const data=await res.json();
+    balance=data.balance||0;
+    document.getElementById("balance").innerText=`Balance: ${balance} coins`;
+  }catch(e){ console.log("Error loading balance:",e);}
 }
 
-async function addCoins(points) {
-  try {
-    await fetch('https://admingo.onrender.com/addCoins', {
-      method: 'POST',
+async function addCoins(points){
+  try{
+    await fetch('https://admingo.onrender.com/addCoins',{
+      method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ telegramId: user.id, amount: points })
+      body:JSON.stringify({telegramId:user.id,amount:points})
     });
-    balance += points;
-    document.getElementById("balance").innerText = `Balance: ${balance} coins`;
-  } catch(e){ console.log("Error adding coins:", e); }
+    balance+=points;
+    document.getElementById("balance").innerText=`Balance: ${balance} coins`;
+  }catch(e){ console.log("Error adding coins:",e);}
 }
 
 // -------------------- Monetag Ad Show --------------------
-function showMonetagAd(buttonName, points) {
-  if(typeof show_10580727 === "function") show_10580727(); // Monetag ad show
-  addCoins(points);
+function showMonetagAd(name,points){ if(typeof show_10580727==="function") show_10580727(); addCoins(points); }
+
+// -------------------- Invite --------------------
+function inviteFriend(){ if(typeof show_10580727==="function") show_10580727(); addCoins(50); tg.sendData(JSON.stringify({action:"invite"})); alert("+50 Coins added for inviting!"); }
+
+// -------------------- Modal --------------------
+function openModal(modal){ modal.style.display="flex"; setTimeout(()=>modal.classList.add("show"),10);}
+function closeModal(modal){ modal.classList.remove("show"); setTimeout(()=>modal.style.display="none",250); }
+
+// -------------------- Withdraw --------------------
+const withdrawModal=document.getElementById("withdrawModal");
+const closeWithdraw=document.getElementById("closeWithdraw");
+function withdraw(){
+  if(balance<5000){ alert("Minimum 5000 coins required!"); return;}
+  openModal(withdrawModal);
 }
+closeWithdraw.onclick=()=>closeModal(withdrawModal);
+
+document.getElementById("payNogod").onclick=()=>confirmWithdraw("নগদ");
+document.getElementById("payBikash").onclick=()=>confirmWithdraw("বিকাশ");
+document.getElementById("payRocket").onclick=()=>confirmWithdraw("রকেট");
+
+function confirmWithdraw(method){ balance-=5000; document.getElementById("balance").innerText=`Balance: ${balance} coins`; tg.sendData(JSON.stringify({action:"withdraw",amount:5000,method:method})); alert(`Withdraw via ${method} initiated!`); closeModal(withdrawModal); }
+
+// -------------------- Rules --------------------
+const rulesContent=`<h3>AdminGo Mini App Rules & Regulations</h3>
+<ol>
+<li><b>Withdraw নিয়ম:</b> প্রতিবার Withdraw করতে হবে ৫০০০ coins করে। Withdraw এর জন্য নগদ, বিকাশ বা রকেট ব্যবহার করুন।</li>
+<li><b>Ad/Reward Usage:</b> Watch Ad, Spin & Earn, Lucky Box, Video Quest থেকে নির্দিষ্ট সংখ্যক পয়েন্ট পাবেন।</li>
+<li><b>Invite Friend:</b> একাউন্ট বা বন্ধু আমন্ত্রণের মাধ্যমে +50 Coins। ফেক Invite করা যাবে না।</li>
+<li><b>Mini Games / Challenges:</b> Cheats বা অন্যের অ্যাকাউন্ট ব্যবহার নিষিদ্ধ।</li>
+<li><b>Coins ব্যালেন্স:</b> Coins শুধুমাত্র App এর মধ্যে ব্যবহার বা Withdraw এর জন্য।</li>
+<li><b>General Behavior:</b> Spam, ফেক বা Malicious behavior করলে অ্যাকাউন্ট block হতে পারে।</li>
+<li><b>Contact / Complaint:</b> সমস্যা হলে Contact Us বাটন ব্যবহার করুন। Admin Panel শুধুমাত্র Admin এর জন্য।</li>
+</ol>`;
+
+const rulesModal=document.getElementById("rulesModal");
+const closeRules=document.getElementById("closeRules");
+function showRules(){ document.getElementById("rulesContent").innerHTML=rulesContent; openModal(rulesModal);}
+closeRules.onclick=()=>closeModal(rulesModal);
 
 // -------------------- UI Setup --------------------
-if(!user){
-  document.body.innerHTML = "<h2>User data not found. Open from Telegram.</h2>";
-} else {
-  document.getElementById("welcomeMsg").innerText = `Welcome ${user.first_name}`;
+if(!user){ document.body.innerHTML="<h2>User data not found. Open from Telegram.</h2>"; }
+else{
+  document.getElementById("welcomeMsg").innerText=`Welcome ${user.first_name}`;
   loadBalance();
 
-  // Earning Buttons
-  const buttonsData = [
-    { emoji: "💰", name: "Watch Ad", points: 10, cls:"watch-ad" },
-    { emoji: "🎯", name: "Spin & Earn", points: 15, cls:"spin-earn" },
-    { emoji: "📦", name: "Daily Bonus", points: 20, cls:"daily-bonus" },
-    { emoji: "🎁", name: "Lucky Box", points: 25, cls:"lucky-box" },
-    { emoji: "🎬", name: "Video Quest", points: 12, cls:"video-quest" },
-    { emoji: "🏆", name: "Challenge Reward", points: 18, cls:"challenge-reward" },
-    { emoji: "🕹️", name: "Mini Game Bonus", points: 22, cls:"mini-game" }
+  const buttonsData=[
+    {emoji:"💰",name:"Watch Ad",points:10,cls:"watch-ad"},
+    {emoji:"🎯",name:"Spin & Earn",points:15,cls:"spin-earn"},
+    {emoji:"📦",name:"Daily Bonus",points:20,cls:"daily-bonus"},
+    {emoji:"🎁",name:"Lucky Box",points:25,cls:"lucky-box"},
+    {emoji:"🎬",name:"Video Quest",points:12,cls:"video-quest"},
+    {emoji:"🏆",name:"Challenge Reward",points:18,cls:"challenge-reward"},
+    {emoji:"🕹️",name:"Mini Game Bonus",points:22,cls:"mini-game"}
   ];
 
-  const buttonsDiv = document.getElementById("buttons");
-  buttonsData.forEach(btn => {
-    const button = document.createElement("button");
-    button.className = `btn ${btn.cls}`;
-    button.innerHTML = `${btn.emoji} ${btn.name}<span class="points">+${btn.points} coins</span>`;
-    button.onclick = () => showMonetagAd(btn.name, btn.points);
-    buttonsDiv.appendChild(button);
+  const buttonsDiv=document.getElementById("buttons");
+  buttonsData.forEach(btn=>{
+    const b=document.createElement("button");
+    b.className=`btn ${btn.cls}`;
+    b.innerHTML=`${btn.emoji} ${btn.name}<span class="points">+${btn.points} coins</span>`;
+    b.onclick=()=>showMonetagAd(btn.name,btn.points);
+    buttonsDiv.appendChild(b);
   });
 
-  // Single Buttons
-  const singleBtns = [
-    { name: "Invite Friend (+50 coins)", cls: "invite", action: ()=>alert("Invite friend flow") },
-    { name: "Withdraw", cls: "withdraw", action: ()=>alert("Withdraw flow") },
-    { name: "Contact Us", cls: "contact", action: ()=>alert("Contact / Complaint") }
+  const singleBtns=[
+    {name:"Invite Friend (+50 coins)",cls:"invite",action:inviteFriend},
+    {name:"Withdraw",cls:"withdraw",action:withdraw},
+    {name:"Rules / Regulation",cls:"rules",action:showRules},
+    {name:"Contact Us",cls:"contact",action:()=>alert("Contact / Complaint")}
   ];
-  const isAdmin = user.id === 6311806060; // <-- replace with your Telegram ID
-  if(isAdmin) singleBtns.push({ name: "Admin Panel", cls: "admin", action: ()=>alert("Admin Panel") });
 
-  const singleButtonsDiv = document.getElementById("singleButtons");
+  const isAdmin=user.id===6311806060;
+  if(isAdmin) singleBtns.push({name:"Admin Panel",cls:"admin",action:()=>alert("Admin Panel")});
+
+  const singleButtonsDiv=document.getElementById("singleButtons");
   singleBtns.forEach(btn=>{
-    const b = document.createElement("button");
-    b.className = `single-btn ${btn.cls}`;
-    b.innerText = btn.name;
-    b.onclick = btn.action;
+    const b=document.createElement("button");
+    b.className=`single-btn ${btn.cls}`;
+    b.innerText=btn.name;
+    b.onclick=btn.action;
     singleButtonsDiv.appendChild(b);
   });
 }
 </script>
-
 </body>
-</html>
+                                                       </html>
