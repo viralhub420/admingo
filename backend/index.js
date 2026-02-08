@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 // 🔥 Firebase init
 admin.initializeApp({
   credential: admin.credential.cert({
-    projectId: "YOUR_PROJECT_ID",
-    clientEmail: "YOUR_CLIENT_EMAIL",
-    privateKey: "YOUR_PRIVATE_KEY".replace(/\\n/g, "\n")
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
   })
 });
 
@@ -39,12 +39,13 @@ app.get("/getBalance", async (req, res) => {
 
     res.json({ balance: doc.data().balance || 0 });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: "server error" });
   }
 });
 
 /* =========================
-   ADD COINS (after ad)
+   ADD COINS
 ========================= */
 app.post("/addCoins", async (req, res) => {
   try {
@@ -57,55 +58,69 @@ app.post("/addCoins", async (req, res) => {
     }, { merge: true });
 
     res.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error(e);
     res.json({ success: false });
   }
 });
 
 /* =========================
-   DAILY BONUS (1x per day)
+   DAILY BONUS
 ========================= */
 app.post("/dailyBonus", async (req, res) => {
-  const { telegramId } = req.body;
-  const ref = db.collection("users").doc(String(telegramId));
-  const doc = await ref.get();
+  try {
+    const { telegramId } = req.body;
+    if (!telegramId) return res.json({ success: false });
 
-  const now = Date.now();
-  const last = doc.data()?.dailyBonusAt || 0;
+    const ref = db.collection("users").doc(String(telegramId));
+    const doc = await ref.get();
 
-  if (now - last < 24 * 60 * 60 * 1000) {
-    return res.json({ success: false, message: "Already claimed" });
+    const now = Date.now();
+    const last = doc.data()?.dailyBonusAt || 0;
+
+    if (now - last < 24 * 60 * 60 * 1000) {
+      return res.json({ success: false, message: "Already claimed" });
+    }
+
+    await ref.set({
+      balance: admin.firestore.FieldValue.increment(20),
+      dailyBonusAt: now
+    }, { merge: true });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.json({ success: false });
   }
-
-  await ref.set({
-    balance: admin.firestore.FieldValue.increment(20),
-    dailyBonusAt: now
-  }, { merge: true });
-
-  res.json({ success: true });
 });
 
 /* =========================
    REFERRAL AUTO VERIFY
 ========================= */
 app.post("/referral", async (req, res) => {
-  const { userId, referrerId } = req.body;
-  if (!userId || !referrerId || userId === referrerId) return res.json({});
+  try {
+    const { userId, referrerId } = req.body;
+    if (!userId || !referrerId || userId === referrerId) return res.json({});
 
-  const userRef = db.collection("users").doc(String(userId));
-  const doc = await userRef.get();
+    const userRef = db.collection("users").doc(String(userId));
+    const doc = await userRef.get();
 
-  if (doc.exists && doc.data().referredBy) {
-    return res.json({}); // already referred
+    if (doc.exists && doc.data().referredBy) {
+      return res.json({}); // already referred
+    }
+
+    await userRef.set({ referredBy: referrerId }, { merge: true });
+    await db.collection("users").doc(String(referrerId)).set({
+      balance: admin.firestore.FieldValue.increment(100)
+    }, { merge: true });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.json({});
   }
-
-  await userRef.set({ referredBy: referrerId }, { merge: true });
-
-  await db.collection("users").doc(String(referrerId)).set({
-    balance: admin.firestore.FieldValue.increment(100)
-  }, { merge: true });
-
-  res.json({ success: true });
 });
 
-app.listen(3000, () => console.log("Server running"));
+// ================= Render Port =================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
