@@ -6,15 +6,15 @@
 <title>Admingo</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <script src="https://libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
 
 <style>
 body{ margin:0; background:#0b0b0b; font-family:Arial, sans-serif; color:white; -webkit-user-select: none; }
 .container{padding:15px}
-.balance{ background:#0277bd; padding:25px; border-radius:15px; text-align:center; font-size:28px; margin-bottom: 15px;}
+.balance{ background: linear-gradient(135deg, #0277bd, #01579b); padding:25px; border-radius:15px; text-align:center; font-size:28px; margin-bottom: 15px; border: 1px solid #039be5;}
 .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.btn{ padding:18px; border-radius:12px; text-align:center; font-weight:bold; cursor:pointer; active { opacity: 0.8; } }
+.btn{ padding:18px; border-radius:12px; text-align:center; font-weight:bold; cursor:pointer; transition: 0.2s; }
+.btn:active { transform: scale(0.95); opacity: 0.8; }
 .green{background:#2ecc71} .blue{background:#3498db} .purple{background:#9b59b6}
 .orange{background:#e67e22} .yellow{background:#f1c40f;color:black} .red{background:#e74c3c}
 .full{grid-column:1/3}
@@ -25,7 +25,7 @@ body{ margin:0; background:#0b0b0b; font-family:Arial, sans-serif; color:white; 
 <div class="container">
   <div class="balance">
     Current Balance<br>
-    <span id="balance">0</span>
+    <span id="balance">Loading...</span>
   </div>
 
   <div class="btn orange full" onclick="invite()">🔗 Invite Friends & Earn</div>
@@ -39,7 +39,7 @@ body{ margin:0; background:#0b0b0b; font-family:Arial, sans-serif; color:white; 
     <div class="btn purple" onclick="earn(18)">🏆 Challenge +18</div>
     <div class="btn blue" onclick="earn(22)">🎮 Mini Game +22</div>
     <div class="btn red full" onclick="withdrawPrompt()">💸 Withdraw</div>
-    <div class="btn green full" onclick="adminPanel()">🛠 Admin Panel</div>
+    <div class="btn green full" onclick="window.location.href='/admin-panel'">🛠 Admin Panel</div>
     <div class="btn yellow full" onclick="rules()">📜 Rules & Regulations</div>
   </div>
 </div>
@@ -49,32 +49,33 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// ইউজার আইডি চেক
-const user = tg.initDataUnsafe.user || { id: 0 };
-const API = "https://admingo.onrender.com";
+// ইউজার ডাটা হ্যান্ডলিং
+const user = tg.initDataUnsafe.user || { id: 12345678, first_name: "Guest" };
+const API = window.location.origin; // Render-এ অটোমেটিক ইউআরএল ধরবে
 
 /* ========== ব্যালেন্স লোড ========== */
 async function loadBalance(){
   try {
     const r = await fetch(`${API}/getBalance?telegramId=${user.id}`);
     const d = await r.json();
-    document.getElementById("balance").innerText = d.balance || 0;
-  } catch(e) { console.error("Balance Load Fail"); }
+    document.getElementById("balance").innerText = d.balance !== undefined ? d.balance : 0;
+  } catch(e) { 
+    console.error("Balance Load Fail");
+    document.getElementById("balance").innerText = "Error";
+  }
 }
 
 /* ========== কয়েন আয় (Ad Logic) ========== */
 async function earn(points) {
-  // ১. চেক করা হচ্ছে Monetag লোড হয়েছে কি না
   if (typeof show_10580727 === "function") {
     show_10580727().then(() => {
-      // অ্যাড দেখা শেষ হলে ডাটাবেসে কয়েন যাবে
       addPoints(points);
-    }).catch(() => {
-      tg.showAlert("অ্যাড লোড হয়নি, আবার চেষ্টা করুন।");
+    }).catch((err) => {
+      console.error(err);
+      tg.showAlert("বিজ্ঞাপন পূর্ণাঙ্গভাবে দেখা হয়নি।");
     });
   } else {
-    // যদি স্ক্রিপ্ট লোড না হয় তবে সরাসরি কয়েন দেওয়ার চেষ্টা (টেস্টিং এর জন্য)
-    tg.showAlert("অ্যাড স্ক্রিপ্ট পাওয়া যাচ্ছে না, দয়া করে অপেক্ষা করুন।");
+    tg.showAlert("অ্যাড লোড হচ্ছে, কিছুক্ষণ পর চেষ্টা করুন।");
   }
 }
 
@@ -89,40 +90,45 @@ async function addPoints(points) {
     const data = await response.json();
     if(data.success) {
       loadBalance();
-      tg.showAlert(`অভিনন্দন! +${points} কয়েন পেয়েছেন।`);
+      tg.showScanQrPopup({ text: "অভিনন্দন! কয়েন যোগ হয়েছে।" }); // ছোট পপআপ (অপশনাল)
+      setTimeout(() => tg.closeScanQrPopup(), 2000);
     }
   } catch(e) { console.error("Add Points Fail"); }
 }
 
 /* ========== ডেইলি বোনাস ========== */
 async function daily(){
-  const r = await fetch(`${API}/dailyBonus`, {
-    method: "POST",
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({telegramId: user.id})
-  });
-  const d = await r.json();
-  if(d.success) {
-    tg.showAlert("ডেইলি বোনাস যোগ হয়েছে!");
-    loadBalance();
-  } else {
-    tg.showAlert(d.message || "আজকের বোনাস নেওয়া হয়ে গেছে।");
-  }
+  try {
+    const r = await fetch(`${API}/dailyBonus`, {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegramId: user.id})
+    });
+    const d = await r.json();
+    if(d.success) {
+      tg.showAlert("ডেইলি বোনাস (+20) যোগ হয়েছে!");
+      loadBalance();
+    } else {
+      tg.showAlert(d.message || "আজকের বোনাস নেওয়া হয়ে গেছে।");
+    }
+  } catch(e) { tg.showAlert("সার্ভার সমস্যা, আবার চেষ্টা করুন।"); }
 }
 
 /* ========== ইনভাইট লিঙ্ক ========== */
 function invite(){
-  const link = `https://t.me/Tetris1earnbot?start=ref_${user.id}`;
+  const link = `https://t.me/share/url?url=https://t.me/Tetris1earnbot?start=ref_${user.id}&text=Join and Earn!`;
   tg.openTelegramLink(link);
 }
 
 /* ========== উইথড্র ========== */
 function withdrawPrompt(){
   const amount = prompt("কত কয়েন উইথড্র করবেন?");
+  if(!amount || isNaN(amount) || amount <= 0) return;
+
   const method = prompt("পেমেন্ট মেথড (Bkash/Nagad):");
   const number = prompt("মোবাইল নম্বর দিন:");
   
-  if(!amount || !method || !number) return;
+  if(!method || !number) return;
 
   fetch(`${API}/withdraw`, {
     method: "POST",
@@ -134,15 +140,13 @@ function withdrawPrompt(){
       number
     })
   }).then(r => r.json()).then(d => {
-    if(d.success) tg.showAlert("উইথড্র রিকোয়েস্ট সফল হয়েছে!");
-    else tg.showAlert(d.message || "ব্যালেন্স কম আছে!");
+    if(d.success) tg.showAlert("উইথড্র রিকোয়েস্ট সফল হয়েছে! অ্যাডমিন চেক করে পেমেন্ট করে দেবে।");
+    else tg.showAlert(d.message || "ব্যালেন্স পর্যাপ্ত নয়!");
     loadBalance();
   });
 }
 
-// Rules & Admin (সংক্ষিপ্ত)
-function rules(){ tg.showAlert("১. প্রতিদিন বোনাস নিন।\n২. অ্যাড দেখে আয় করুন।"); }
-async function adminPanel(){ tg.showAlert("Admin Panel is under construction."); }
+function rules(){ tg.showAlert("১. ভিপিএন ব্যবহার করবেন না।\n২. সঠিক নম্বর দিয়ে উইথড্র করুন।\n৩. প্রতিদিন বোনাস ক্লেইম করুন।"); }
 
 // Initial Load
 loadBalance();
