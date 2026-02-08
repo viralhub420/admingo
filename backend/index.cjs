@@ -8,6 +8,7 @@ const path = require("path"); // static serve এর জন্য
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "/"))); // index.html serve
 
 // 🔥 Firebase init
 admin.initializeApp({
@@ -32,10 +33,7 @@ app.get("/getBalance", async (req, res) => {
     const doc = await ref.get();
 
     if (!doc.exists) {
-      await ref.set({
-        balance: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      await ref.set({ balance: 0, createdAt: admin.firestore.FieldValue.serverTimestamp() });
       return res.json({ balance: 0 });
     }
 
@@ -80,9 +78,7 @@ app.post("/dailyBonus", async (req, res) => {
     const now = Date.now();
     const last = doc.data()?.dailyBonusAt || 0;
 
-    if (now - last < 24 * 60 * 60 * 1000) {
-      return res.json({ success: false, message: "Already claimed" });
-    }
+    if (now - last < 24 * 60 * 60 * 1000) return res.json({ success: false, message: "Already claimed" });
 
     await ref.set({
       balance: admin.firestore.FieldValue.increment(20),
@@ -107,9 +103,7 @@ app.post("/referral", async (req, res) => {
     const userRef = db.collection("users").doc(String(userId));
     const doc = await userRef.get();
 
-    if (doc.exists && doc.data().referredBy) {
-      return res.json({}); // already referred
-    }
+    if (doc.exists && doc.data().referredBy) return res.json({}); // already referred
 
     await userRef.set({ referredBy: referrerId }, { merge: true });
     await db.collection("users").doc(String(referrerId)).set({
@@ -122,6 +116,7 @@ app.post("/referral", async (req, res) => {
     res.json({});
   }
 });
+
 /* =========================
    WITHDRAW REQUEST
 ========================= */
@@ -129,13 +124,8 @@ app.post("/withdraw", async (req, res) => {
   try {
     const { telegramId, amount, method, number } = req.body;
 
-    if (!telegramId || !amount || !method || !number) {
-      return res.json({ success: false, message: "Missing fields" });
-    }
-
-    if (amount < 100) {
-      return res.json({ success: false, message: "Minimum withdraw 100 coins" });
-    }
+    if (!telegramId || !amount || !method || !number) return res.json({ success: false, message: "Missing fields" });
+    if (amount < 100) return res.json({ success: false, message: "Minimum withdraw 100 coins" });
 
     const userRef = db.collection("users").doc(String(telegramId));
     const userDoc = await userRef.get();
@@ -144,12 +134,10 @@ app.post("/withdraw", async (req, res) => {
       return res.json({ success: false, message: "Insufficient balance" });
     }
 
-    // deduct balance
-    await userRef.update({
-      balance: admin.firestore.FieldValue.increment(-amount)
-    });
+    // Deduct balance
+    await userRef.update({ balance: admin.firestore.FieldValue.increment(-amount) });
 
-    // save withdraw request
+    // Save withdraw request
     await db.collection("withdraws").add({
       telegramId,
       amount,
@@ -167,16 +155,6 @@ app.post("/withdraw", async (req, res) => {
   }
 });
 
-/* =========================
-   Serve index.html (root route)
-========================= */
-app.use(express.static(path.join(__dirname, "."))); // static files serve
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-/* =========================
-   Start Server
-========================= */
+// ================= Render Port =================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
