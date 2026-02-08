@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <title>Admingo</title>
 
+<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="//libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
+
+<!-- Monetag Ad Script -->
+<script src="//libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727" onload="adLoaded=true"></script>
 
 <style>
 body{
@@ -83,7 +86,10 @@ async function loadBalance(){
 
 /* ========== Earn Coins ========== */
 async function earn(points){
-  show_10580727(); // Monetag ad
+  if(typeof show_10580727 === "function") show_10580727();
+  else console.log("Ad script not loaded");
+
+  // Coins add after ad duration
   setTimeout(async ()=>{
     await fetch(API+"/addCoins",{
       method:"POST",
@@ -91,7 +97,7 @@ async function earn(points){
       body:JSON.stringify({telegramId:user.id,amount:points})
     });
     loadBalance();
-  },4000); // ad delay
+  },4000); // adjust if ad takes longer
 }
 
 /* ========== Daily Bonus ========== */
@@ -164,7 +170,8 @@ if(tg.initDataUnsafe.start_param?.startsWith("ref_")){
   });
 }
 
+/* ========== Initial Load ========== */
 loadBalance();
 </script>
 </body>
-</html>
+  </html>
