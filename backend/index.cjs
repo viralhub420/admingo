@@ -10,8 +10,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// Telegram helper
+// Environment Variables
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const ADMIN_ID = process.env.ADMIN_ID; // <--- রেন্ডার থেকে আইডিটি এখানে আসবে
+
+// Telegram helper (ইউজার এবং অ্যাডমিনকে মেসেজ দেওয়ার জন্য)
 async function sendTelegramMessage(telegramId, message) {
   if (!TELEGRAM_BOT_TOKEN || !telegramId) return;
   try {
@@ -83,10 +86,8 @@ app.post("/withdraw", async (req, res) => {
       return res.json({ success: false, message: "Insufficient balance" });
     }
 
-    // ব্যালেন্স কমানো
     await ref.update({ balance: admin.firestore.FieldValue.increment(-Number(amount)) });
 
-    // উইথড্র রিকোয়েস্ট সেভ করা
     await db.collection("withdraws").add({
       telegramId: String(telegramId),
       amount: Number(amount),
@@ -96,7 +97,14 @@ app.post("/withdraw", async (req, res) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
+    // ১. ইউজারকে কনফার্মেশন মেসেজ
     await sendTelegramMessage(telegramId, `💰 Withdraw request for ${amount} coins received.`);
+
+    // ২. অ্যাডমিনকে (আপনাকে) নোটিফিকেশন পাঠানো <--- নতুন অ্যাড করা হয়েছে
+    if (ADMIN_ID) {
+      await sendTelegramMessage(ADMIN_ID, `🔔 নতুন উইথড্র রিকোয়েস্ট!\nইউজার আইডি: ${telegramId}\nপরিমাণ: ${amount}\nমেথড: ${method}\nনম্বর: ${number}`);
+    }
+
     res.json({ success: true });
   } catch (e) {
     console.error(e);
@@ -137,7 +145,6 @@ app.post("/admin/withdraw-action", async (req, res) => {
       await ref.update({ status: "approved" });
       await sendTelegramMessage(telegramId, `✅ Your withdraw of ${amount} coins has been approved!`);
     } else {
-      // রিজেক্ট করলে ইউজারের কয়েন ফেরত দেওয়া
       const userRef = db.collection("users").doc(String(telegramId));
       await userRef.update({
         balance: admin.firestore.FieldValue.increment(Number(amount))
@@ -153,7 +160,6 @@ app.post("/admin/withdraw-action", async (req, res) => {
   }
 });
 
-// Serve Frontend Files
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -162,6 +168,6 @@ app.get("/admin-panel", (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
 
-// Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+      
