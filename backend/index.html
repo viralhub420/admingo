@@ -3,15 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <title>Admingo</title>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="//libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
 
 <style>
-body{margin:0;background:#0b0b0b;font-family:Arial;color:white;}
+body{
+  margin:0;
+  background:#0b0b0b;
+  font-family:Arial;
+  color:white;
+}
 .container{padding:15px}
-.balance{background:#0277bd;padding:25px;border-radius:15px;text-align:center;font-size:28px;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.btn{padding:18px;border-radius:12px;text-align:center;font-weight:bold;cursor:pointer;}
+.balance{
+  background:#0277bd;
+  padding:25px;
+  border-radius:15px;
+  text-align:center;
+  font-size:28px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.btn{
+  padding:18px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:bold;
+  cursor:pointer;
+}
 .green{background:#2ecc71}
 .blue{background:#3498db}
 .purple{background:#9b59b6}
@@ -21,9 +43,13 @@ body{margin:0;background:#0b0b0b;font-family:Arial;color:white;}
 .full{grid-column:1/3}
 </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="balance">Current Balance<br><span id="balance">0</span></div>
+  <div class="balance">
+    Current Balance<br>
+    <span id="balance">0</span>
+  </div>
 
   <div class="btn orange full" onclick="invite()">🔗 Invite Friends & Earn</div>
   <div class="btn green full" onclick="daily()">🎁 Daily Bonus (+20)</div>
@@ -35,8 +61,8 @@ body{margin:0;background:#0b0b0b;font-family:Arial;color:white;}
     <div class="btn orange" onclick="earn(12)">🎬 Video Quest +12</div>
     <div class="btn purple" onclick="earn(18)">🏆 Challenge +18</div>
     <div class="btn blue" onclick="earn(22)">🎮 Mini Game +22</div>
-    <div class="btn red full" onclick="withdraw()">💸 Withdraw</div>
-    <div class="btn red full" onclick="adminPanel()">🛠 Admin Panel</div>
+    <div class="btn red full" onclick="withdrawPrompt()">💸 Withdraw</div>
+    <div class="btn green full" onclick="adminPanel()">🛠 Admin Panel</div>
     <div class="btn yellow full" onclick="rules()">📜 Rules & Regulations</div>
   </div>
 </div>
@@ -44,65 +70,98 @@ body{margin:0;background:#0b0b0b;font-family:Arial;color:white;}
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
-if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) { alert("Open in Telegram"); throw new Error("No user"); }
+
 const user = tg.initDataUnsafe.user;
 const API = "https://admingo.onrender.com";
 
+/* ========== Load Balance ========== */
 async function loadBalance(){
   const r = await fetch(`${API}/getBalance?telegramId=${user.id}`);
   const d = await r.json();
   document.getElementById("balance").innerText = d.balance;
 }
 
+/* ========== Earn Coins ========== */
 async function earn(points){
   show_10580727(); // Monetag ad
   setTimeout(async ()=>{
-    await fetch(API+"/addCoins",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({telegramId:user.id,amount:points})});
+    await fetch(API+"/addCoins",{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({telegramId:user.id,amount:points})
+    });
     loadBalance();
-  },4000);
+  },4000); // ad delay
 }
 
+/* ========== Daily Bonus ========== */
 async function daily(){
-  await fetch(API+"/dailyBonus",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({telegramId:user.id})});
+  await fetch(API+"/dailyBonus",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({telegramId:user.id})
+  });
   loadBalance();
 }
 
+/* ========== Invite ========== */
 function invite(){
   const link = `https://t.me/Tetris1earnbot?start=ref_${user.id}`;
   tg.openTelegramLink(link);
 }
 
-function withdraw(){
-  const amount = prompt("Enter withdraw amount");
-  if(!amount) return;
-  const method = prompt("Method: bkash / nagad / rocket");
-  if(!method) return;
-  const number = prompt("Enter your " + method + " number");
-  if(!number) return;
+/* ========== Withdraw ========== */
+async function withdrawPrompt(){
+  const amount = prompt("Enter amount to withdraw:");
+  const method = prompt("Enter method (Bkash/Nagad/Rocket):");
+  const number = prompt("Enter number:");
+  if(!amount || !method || !number) return;
 
-  fetch(API + "/withdraw", {
+  const r = await fetch(API+"/withdraw",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({telegramId:user.id,amount:Number(amount),method,number})
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.success){ alert("Withdraw request submitted"); loadBalance(); }
-    else alert(d.message||"Withdraw failed");
+    body:JSON.stringify({
+      telegramId:user.id,
+      amount:Number(amount),
+      method,
+      number
+    })
   });
+  const d = await r.json();
+  if(d.success) alert("Withdraw request sent!");
+  loadBalance();
 }
 
-function adminPanel(){
-  alert("Admin Panel Placeholder");
+/* ========== Admin Panel ========== */
+async function adminPanel(){
+  const withdrawId = prompt("Enter Withdraw ID:");
+  const action = prompt("Enter action (approve/reject):");
+  if(!withdrawId || !action) return;
+
+  const r = await fetch(API+"/admin/withdraws",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ withdrawId, action })
+  });
+  const d = await r.json();
+  if(d.success) alert(`Withdraw ${action}ed!`);
 }
 
+/* ========== Rules ========== */
 function rules(){
-  alert("Rules & Regulations Placeholder");
+  alert("Rules & Regulations:\n1. Earn coins by watching ads...\n2. Withdraw rules...");
 }
 
-// referral detect
+/* ========== Referral detect ========== */
 if(tg.initDataUnsafe.start_param?.startsWith("ref_")){
-  fetch(API+"/referral",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:user.id,referrerId:tg.initDataUnsafe.start_param.replace("ref_","")})});
+  fetch(API+"/referral",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      userId:user.id,
+      referrerId:tg.initDataUnsafe.start_param.replace("ref_","")
+    })
+  });
 }
 
 loadBalance();
