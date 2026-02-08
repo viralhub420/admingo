@@ -122,6 +122,50 @@ app.post("/referral", async (req, res) => {
     res.json({});
   }
 });
+/* =========================
+   WITHDRAW REQUEST
+========================= */
+app.post("/withdraw", async (req, res) => {
+  try {
+    const { telegramId, amount, method, number } = req.body;
+
+    if (!telegramId || !amount || !method || !number) {
+      return res.json({ success: false, message: "Missing fields" });
+    }
+
+    if (amount < 100) {
+      return res.json({ success: false, message: "Minimum withdraw 100 coins" });
+    }
+
+    const userRef = db.collection("users").doc(String(telegramId));
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists || (userDoc.data().balance || 0) < amount) {
+      return res.json({ success: false, message: "Insufficient balance" });
+    }
+
+    // deduct balance
+    await userRef.update({
+      balance: admin.firestore.FieldValue.increment(-amount)
+    });
+
+    // save withdraw request
+    await db.collection("withdraws").add({
+      telegramId,
+      amount,
+      method,
+      number,
+      status: "pending",
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true });
+
+  } catch (e) {
+    console.error(e);
+    res.json({ success: false, message: "Server error" });
+  }
+});
 
 /* =========================
    Serve index.html (root route)
