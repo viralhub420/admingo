@@ -134,11 +134,40 @@ function invite(){
 }
 
 /* WITHDRAW (placeholder) */
+<script>
 function withdraw(){
-  alert("Withdraw system coming soon (Bkash / Nagad / Rocket)");
-}
+  const amount = prompt("Enter withdraw amount");
+  if(!amount) return;
 
-/* ADMIN PANEL (placeholder) */
+  const method = prompt("Method: bkash / nagad / rocket");
+  if(!method) return;
+
+  const number = prompt("Enter your " + method + " number");
+  if(!number) return;
+
+  fetch(API + "/withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      telegramId: user.id,
+      amount: Number(amount),
+      method,
+      number
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.success){
+      alert("Withdraw request submitted");
+      loadBalance();
+    }else{
+      alert(d.message || "Withdraw failed");
+    }
+  });
+}
+</script>
+  
+  ADMIN PANEL (placeholder) */
 function admin(){
   alert("Admin panel only");
 }
