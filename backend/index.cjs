@@ -3,7 +3,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const admin = require("firebase-admin");
-const path = require("path");
+const path = require("path"); // static serve এর জন্য
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -122,6 +123,16 @@ app.post("/referral", async (req, res) => {
   }
 });
 
-// ================= Render Port =================
+/* =========================
+   Serve index.html (root route)
+========================= */
+app.use(express.static(path.join(__dirname, "."))); // static files serve
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+/* =========================
+   Start Server
+========================= */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
