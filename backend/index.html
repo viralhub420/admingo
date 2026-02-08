@@ -2,47 +2,21 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admingo</title>
 
-<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Monetag Ad Script -->
-<script src="//libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727" onload="adLoaded=true"></script>
+<script src="https://libtl.com/sdk.js" data-zone="10580727" data-sdk="show_10580727"></script>
 
 <style>
-body{
-  margin:0;
-  background:#0b0b0b;
-  font-family:Arial;
-  color:white;
-}
+body{ margin:0; background:#0b0b0b; font-family:Arial, sans-serif; color:white; -webkit-user-select: none; }
 .container{padding:15px}
-.balance{
-  background:#0277bd;
-  padding:25px;
-  border-radius:15px;
-  text-align:center;
-  font-size:28px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.btn{
-  padding:18px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:bold;
-  cursor:pointer;
-}
-.green{background:#2ecc71}
-.blue{background:#3498db}
-.purple{background:#9b59b6}
-.orange{background:#e67e22}
-.yellow{background:#f1c40f;color:black}
-.red{background:#e74c3c}
+.balance{ background:#0277bd; padding:25px; border-radius:15px; text-align:center; font-size:28px; margin-bottom: 15px;}
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btn{ padding:18px; border-radius:12px; text-align:center; font-weight:bold; cursor:pointer; active { opacity: 0.8; } }
+.green{background:#2ecc71} .blue{background:#3498db} .purple{background:#9b59b6}
+.orange{background:#e67e22} .yellow{background:#f1c40f;color:black} .red{background:#e74c3c}
 .full{grid-column:1/3}
 </style>
 </head>
@@ -73,138 +47,104 @@ body{
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
+tg.expand();
 
-const user = tg.initDataUnsafe.user;
+// ইউজার আইডি চেক
+const user = tg.initDataUnsafe.user || { id: 0 };
 const API = "https://admingo.onrender.com";
 
-/* ========== Load Balance ========== */
+/* ========== ব্যালেন্স লোড ========== */
 async function loadBalance(){
-  const r = await fetch(`${API}/getBalance?telegramId=${user.id}`);
-  const d = await r.json();
-  document.getElementById("balance").innerText = d.balance;
-}
-
-/* ========== Earn Coins ========== */
-async function earn(points) {
-  // ১. চেক করা হচ্ছে Monetag অ্যাড ফাংশনটি ব্রাউজারে লোড হয়েছে কি না
-  if (typeof show_10580727 === "function") {
-    
-    // ২. অ্যাড দেখানোর চেষ্টা করা হচ্ছে
-    show_10580727().then(() => {
-      // যদি অ্যাডটি সফলভাবে দেখানো শেষ হয় (Reward Condition)
-      addPointsToDatabase(points);
-    }).catch((err) => {
-      // যদি অ্যাড লোড হতে সমস্যা হয় (যেমন: No Fill বা Network Error)
-      alert("অ্যাড লোড হতে পারছে না। আবার চেষ্টা করুন।");
-    });
-
-  } else {
-    // স্ক্রিপ্ট ব্লক থাকলে বা লোড না হলে
-    alert("অ্যাড স্ক্রিপ্ট পাওয়া যাচ্ছে না। আপনার AdBlocker বন্ধ করুন।");
-  }
-}
-
-// ৩. ডাটাবেসে কয়েন পাঠানোর জন্য আলাদা ফাংশন
-async function addPointsToDatabase(points) {
   try {
-    const response = await fetch(API + "/addCoins", {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramId: user.id, amount: points })
+    const r = await fetch(`${API}/getBalance?telegramId=${user.id}`);
+    const d = await r.json();
+    document.getElementById("balance").innerText = d.balance || 0;
+  } catch(e) { console.error("Balance Load Fail"); }
+}
+
+/* ========== কয়েন আয় (Ad Logic) ========== */
+async function earn(points) {
+  // ১. চেক করা হচ্ছে Monetag লোড হয়েছে কি না
+  if (typeof show_10580727 === "function") {
+    show_10580727().then(() => {
+      // অ্যাড দেখা শেষ হলে ডাটাবেসে কয়েন যাবে
+      addPoints(points);
+    }).catch(() => {
+      tg.showAlert("অ্যাড লোড হয়নি, আবার চেষ্টা করুন।");
     });
-    
-    if (response.ok) {
-      loadBalance(); // স্ক্রিনে ব্যালেন্স আপডেট করবে
-      tg.showAlert(`অভিনন্দন! আপনি ${points} কয়েন পেয়েছেন।`);
-    }
-  } catch (error) {
-    console.error("Coin add failed:", error);
+  } else {
+    // যদি স্ক্রিপ্ট লোড না হয় তবে সরাসরি কয়েন দেওয়ার চেষ্টা (টেস্টিং এর জন্য)
+    tg.showAlert("অ্যাড স্ক্রিপ্ট পাওয়া যাচ্ছে না, দয়া করে অপেক্ষা করুন।");
   }
 }
-  
 
-  // Coins add after ad duration
-  setTimeout(async ()=>{
-    await fetch(API+"/addCoins",{
-      method:"POST",
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({telegramId:user.id,amount:points})
+/* ========== ডাটাবেসে কয়েন অ্যাড ========== */
+async function addPoints(points) {
+  try {
+    const response = await fetch(`${API}/addCoins`, {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegramId: user.id, amount: points})
     });
-    loadBalance();
-  },4000); // adjust if ad takes longer
+    const data = await response.json();
+    if(data.success) {
+      loadBalance();
+      tg.showAlert(`অভিনন্দন! +${points} কয়েন পেয়েছেন।`);
+    }
+  } catch(e) { console.error("Add Points Fail"); }
 }
 
-/* ========== Daily Bonus ========== */
+/* ========== ডেইলি বোনাস ========== */
 async function daily(){
-  await fetch(API+"/dailyBonus",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({telegramId:user.id})
+  const r = await fetch(`${API}/dailyBonus`, {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({telegramId: user.id})
   });
-  loadBalance();
+  const d = await r.json();
+  if(d.success) {
+    tg.showAlert("ডেইলি বোনাস যোগ হয়েছে!");
+    loadBalance();
+  } else {
+    tg.showAlert(d.message || "আজকের বোনাস নেওয়া হয়ে গেছে।");
+  }
 }
 
-/* ========== Invite ========== */
+/* ========== ইনভাইট লিঙ্ক ========== */
 function invite(){
   const link = `https://t.me/Tetris1earnbot?start=ref_${user.id}`;
   tg.openTelegramLink(link);
 }
 
-/* ========== Withdraw ========== */
-async function withdrawPrompt(){
-  const amount = prompt("Enter amount to withdraw:");
-  const method = prompt("Enter method (Bkash/Nagad/Rocket):");
-  const number = prompt("Enter number:");
+/* ========== উইথড্র ========== */
+function withdrawPrompt(){
+  const amount = prompt("কত কয়েন উইথড্র করবেন?");
+  const method = prompt("পেমেন্ট মেথড (Bkash/Nagad):");
+  const number = prompt("মোবাইল নম্বর দিন:");
+  
   if(!amount || !method || !number) return;
 
-  const r = await fetch(API+"/withdraw",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      telegramId:user.id,
-      amount:Number(amount),
+  fetch(`${API}/withdraw`, {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      telegramId: user.id,
+      amount: Number(amount),
       method,
       number
     })
-  });
-  const d = await r.json();
-  if(d.success) alert("Withdraw request sent!");
-  loadBalance();
-}
-
-/* ========== Admin Panel ========== */
-async function adminPanel(){
-  const withdrawId = prompt("Enter Withdraw ID:");
-  const action = prompt("Enter action (approve/reject):");
-  if(!withdrawId || !action) return;
-
-  const r = await fetch(API+"/admin/withdraws",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ withdrawId, action })
-  });
-  const d = await r.json();
-  if(d.success) alert(`Withdraw ${action}ed!`);
-}
-
-/* ========== Rules ========== */
-function rules(){
-  alert("Rules & Regulations:\n1. Earn coins by watching ads...\n2. Withdraw rules...");
-}
-
-/* ========== Referral detect ========== */
-if(tg.initDataUnsafe.start_param?.startsWith("ref_")){
-  fetch(API+"/referral",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      userId:user.id,
-      referrerId:tg.initDataUnsafe.start_param.replace("ref_","")
-    })
+  }).then(r => r.json()).then(d => {
+    if(d.success) tg.showAlert("উইথড্র রিকোয়েস্ট সফল হয়েছে!");
+    else tg.showAlert(d.message || "ব্যালেন্স কম আছে!");
+    loadBalance();
   });
 }
 
-/* ========== Initial Load ========== */
+// Rules & Admin (সংক্ষিপ্ত)
+function rules(){ tg.showAlert("১. প্রতিদিন বোনাস নিন।\n২. অ্যাড দেখে আয় করুন।"); }
+async function adminPanel(){ tg.showAlert("Admin Panel is under construction."); }
+
+// Initial Load
 loadBalance();
 </script>
 </body>
