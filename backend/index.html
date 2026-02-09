@@ -49,9 +49,16 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// ৩. ইনস্ট্রাকশন পপআপ যোগ করা হলো
+tg.showPopup({
+    title: 'কিভাবে কাজ করবেন?',
+    message: '১. বিজ্ঞাপনটি অন্তত ৩৫ সেকেন্ড দেখুন।\n২. ডেইলি বোনাস নিতে প্রতিদিন অ্যাপ ওপেন করুন।',
+    buttons: [{type: 'ok'}]
+});
+
 // ইউজার ডাটা হ্যান্ডলিং
 const user = tg.initDataUnsafe.user || { id: 12345678, first_name: "Guest" };
-const API = window.location.origin; // Render-এ অটোমেটিক ইউআরএল ধরবে
+const API = window.location.origin;
 
 /* ========== ব্যালেন্স লোড ========== */
 async function loadBalance(){
@@ -65,21 +72,26 @@ async function loadBalance(){
   }
 }
 
-/* ========== কয়েন আয় (Ad Logic) ========== */
+/* ========== ২. স্মার্ট টাইমার সহ বিজ্ঞাপন ফাংশন ========== */
 async function earn(points) {
   if (typeof show_10580727 === "function") {
+    tg.showAlert("বিজ্ঞাপন লোড হচ্ছে। পয়েন্ট পেতে ৩৫ সেকেন্ড অপেক্ষা করুন।");
+    
     show_10580727().then(() => {
-      addPoints(points);
+      // ৩৫ সেকেন্ডের টাইমার সেট করা হলো (৩৫০০০ মিলিসেকেন্ড)
+      setTimeout(() => {
+        addPoints(points);
+      }, 35000); 
     }).catch((err) => {
       console.error(err);
-      tg.showAlert("বিজ্ঞাপন পূর্ণাঙ্গভাবে দেখা হয়নি।");
+      tg.showAlert("বিজ্ঞাপনটি শেষ পর্যন্ত দেখা হয়নি।");
     });
   } else {
     tg.showAlert("অ্যাড লোড হচ্ছে, কিছুক্ষণ পর চেষ্টা করুন।");
   }
 }
 
-/* ========== ডাটাবেসে কয়েন অ্যাড ========== */
+/* ========== ১. ডাটাবেসে কয়েন অ্যাড (QR ক্যামেরা রিমুভ করা হয়েছে) ========== */
 async function addPoints(points) {
   try {
     const response = await fetch(`${API}/addCoins`, {
@@ -90,8 +102,8 @@ async function addPoints(points) {
     const data = await response.json();
     if(data.success) {
       loadBalance();
-      tg.showScanQrPopup({ text: "অভিনন্দন! কয়েন যোগ হয়েছে।" }); // ছোট পপআপ (অপশনাল)
-      setTimeout(() => tg.closeScanQrPopup(), 2000);
+      // কিউআর পপআপ বদলে অ্যালার্ট ব্যবহার করা হয়েছে
+      tg.showAlert(`অভিনন্দন! +${points} কয়েন সফলভাবে যোগ হয়েছে।`);
     }
   } catch(e) { console.error("Add Points Fail"); }
 }
@@ -106,7 +118,7 @@ async function daily(){
     });
     const d = await r.json();
     if(d.success) {
-      tg.showAlert("ডেইলি বোনাস (+20) যোগ হয়েছে!");
+      tg.showAlert("অভিনন্দন! আপনি ২০ কয়েন ডেইলি বোনাস পেয়েছেন।");
       loadBalance();
     } else {
       tg.showAlert(d.message || "আজকের বোনাস নেওয়া হয়ে গেছে।");
