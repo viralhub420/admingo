@@ -71,6 +71,37 @@ app.post("/addCoins", async (req, res) => {
 });
 
 /* =========================
+   USER: DAILY BONUS 
+========================= */
+app.post("/dailyBonus", async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    const userRef = db.collection("users").doc(String(telegramId));
+    const doc = await userRef.get();
+    
+    if (!doc.exists) return res.json({ success: false, message: "User not found" });
+
+    const lastDaily = doc.data()?.lastDaily?.toDate() || new Date(0);
+    const now = new Date();
+    
+    // ২৪ ঘণ্টা চেক
+    if (now - lastDaily < 24 * 60 * 60 * 1000) {
+      const remainingHours = Math.ceil((24 * 60 * 60 * 1000 - (now - lastDaily)) / (3600000));
+      return res.json({ success: false, message: `আবার ${remainingHours} ঘণ্টা পর চেষ্টা করুন।` });
+    }
+
+    await userRef.update({
+      balance: admin.firestore.FieldValue.increment(20),
+      lastDaily: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false });
+  }
+});
+
+/* =========================
    USER: WITHDRAW REQUEST
 ========================= */
 app.post("/withdraw", async (req, res) => {
