@@ -91,7 +91,7 @@ app.post("/dailyBonus", async (req, res) => {
     }
 
     await userRef.update({
-      balance: admin.firestore.FieldValue.increment(20),
+      balance: admin.firestore.FieldValue.increment(10),
       lastDaily: admin.firestore.FieldValue.serverTimestamp()
     });
 
